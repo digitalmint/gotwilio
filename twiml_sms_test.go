@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"testing"
 )
 
@@ -19,6 +20,7 @@ func TestTWiMLSmsRenderBasic(t *testing.T) {
 	twilio.LookupURL = srv.URL
 
 	// init
+	space := regexp.MustCompile(`\s+`)
 	var mr MessagingResponse
 
 	// add message
@@ -33,7 +35,11 @@ func TestTWiMLSmsRenderBasic(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to render xml: %+v", err)
 	}
-	t.Logf("xml: %+v", xml)
+
+	expected := `<?xml version="1.0" encoding="UTF-8"?> <Response> <Message> <Body>hello world!</Body> <Redirect>https://demo.twilio.com/welcome/sms/</Redirect> </Message> </Response>`
+	if expected != space.ReplaceAllString(xml, " ") {
+		t.Fatalf("TestTWiMLSmsRenderBasic - unexpected xml")
+	}
 }
 
 func TestTWiMLSmsRenderSend2Messages(t *testing.T) {
@@ -63,7 +69,12 @@ func TestTWiMLSmsRenderSend2Messages(t *testing.T) {
 		t.Fatalf("failed to render xml: %+v", err)
 	}
 
-	t.Logf("xml: %+v", xml)
+	space := regexp.MustCompile(`\s+`)
+
+	expected := `<?xmlversion="1.0"encoding="UTF-8"?><Response><Message>Thisismessage1of2.</Message><Message>Thisismessage2of2.</Message></Response>`
+	if expected != space.ReplaceAllString(xml, "") {
+		t.Fatalf("TestTWiMLSmsRenderSend2Messages - unexpected xml")
+	}
 }
 
 func TestTWiMLSmsRenderSendingMMS(t *testing.T) {
@@ -90,7 +101,12 @@ func TestTWiMLSmsRenderSendingMMS(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to render message with MMS: %+v", err)
 	}
-	t.Logf("xml: %+v", xml)
+
+	space := regexp.MustCompile(`\s+`)
+	expected := `<?xmlversion="1.0"encoding="UTF-8"?><Response><Message><Body>StoreLocation:123EasySt.</Body><Redirect>https://demo.twilio.com/owl.png</Redirect></Message></Response>`
+	if expected != space.ReplaceAllString(xml, "") {
+		t.Fatalf("TestTWiMLSmsRenderSendingMMS - unexpected xml")
+	}
 }
 
 func TestTWiMLSmsRenderMessageStatus(t *testing.T) {
@@ -118,5 +134,10 @@ func TestTWiMLSmsRenderMessageStatus(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to render message status: %+v", err)
 	}
-	t.Logf("xml: %+v", xml)
+
+	space := regexp.MustCompile(`\s+`)
+	expected := `<?xmlversion="1.0"encoding="UTF-8"?><Response><MessageAction="/SmsHandler.php"Method="POST">StoreLocation:123EasySt.</Message></Response>`
+	if expected != space.ReplaceAllString(xml, "") {
+		t.Fatalf("TestTWiMLSmsRenderMessageStatus - unexpected xml")
+	}
 }
